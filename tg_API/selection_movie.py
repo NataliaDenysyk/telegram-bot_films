@@ -2,6 +2,7 @@ from random import choice
 import re
 
 from aiogram import Router, F
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters import Command, Text
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
@@ -60,14 +61,19 @@ async def cmd_genre(message: Message, state: FSMContext):
 
 
 @router.message(OrderChoiceMovie.choosing_genre, F.text.in_(choice_genre))
-async def method_chosen_genre(message: Message, state: FSMContext):
+async def method_chosen_genre(message: Message, state: FSMContext, encoding=None):
     await state.update_data(chosen_movie=message.text.lower())
     user_data = await state.get_data()
     userid = message.from_user.id
     usergenre = user_data['chosen_movie']
     response = Movie(user_id=userid, genre=usergenre, start_year=2005, end_year=2020)
     result = response.selections_of_films()
-    await message.answer('\n'.join(result))
+    for num in range(len(result)):
+        try:
+            await message.answer(result[num][0])
+            await message.answer('\n'.join(result[num][1]))
+        except TelegramBadRequest:
+            print('ghj')
     await message.answer('Приятного просмотра!')
     await message.answer(
         text="Выбери по какому признаку будем искать фильм",
@@ -104,7 +110,12 @@ async def method_chosen_year(message: Message, state: FSMContext):
         usergenre = choice(choice_genre)
         response = Movie(user_id=userid, genre=usergenre, start_year=userstart_year, end_year=userend_year)
         result = response.selections_of_films()
-        await message.answer('\n'.join(result))
+        for num in range(len(result)):
+            try:
+                await message.answer(result[num][0])
+                await message.answer('\n'.join(result[num][1]))
+            except TelegramBadRequest:
+                print('ghj')
         await message.answer(text='Приятного просмотра!')
         await message.answer(
             text="Выбери по какому признаку будем искать фильм",
@@ -125,7 +136,12 @@ async def cmd_random(message: Message, state: FSMContext):
     usergenre = choice(choice_genre)
     response = Movie(user_id=userid, genre=usergenre, start_year=1970, end_year=2020)
     result = response.selections_of_films()
-    await message.answer('\n'.join(result))
+    for num in range(len(result)):
+        try:
+            await message.answer(result[num][0])
+            await message.answer('\n'.join(result[num][1]))
+        except TelegramBadRequest:
+            print('ghj')
     await message.answer(text='Приятного просмотра!')
     await message.answer(
         text="Выбери по какому признаку будем искать фильм",
@@ -137,7 +153,6 @@ async def cmd_random(message: Message, state: FSMContext):
 @router.message(Text("history"))
 async def cmd_history(message: Message, state: FSMContext):
     userid = message.from_user.id
-    # usergenre = choice(choice_genre)
     response = get_history_movie(user_id=userid)
     await message.answer(text='Ваша история поиска')
     await message.answer('\n\n'.join(response))
